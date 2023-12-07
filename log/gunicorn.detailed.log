@@ -1,0 +1,2 @@
+[2023-12-06 22:03:28,606] INFO _log() L96    * Restarting with stat - call_trace=C:\Users\Anne Bortoli\Documents\cursos\PUC-RIO\sprint1\MVP\env\lib\site-packages\werkzeug\_internal.py L96  
+[2023-12-06 22:04:40,690] INFO _log() L96   127.0.0.1 - - [06/Dec/2023 22:04:40] "GET /tasks HTTP/1.1" 200 - - call_trace=C:\Users\Anne Bortoli\Documents\cursos\PUC-RIO\sprint1\MVP\env\lib\site-packages\werkzeug\_internal.py L96  
