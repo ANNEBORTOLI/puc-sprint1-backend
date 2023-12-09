@@ -5,13 +5,7 @@ from model.task import Task
 class TaskSchema(BaseModel):
     """ Define como uma nova task a ser inserida deve ser representada
     """
-    description: str = "Marcar nutricionista"
-
-class TaskUpdateSchema(BaseModel):
-    """ Define como uma task a ser editada deve ser representada
-    """
-    id: int = 1
-    done: int = 1
+    description: str = "Marcar dentista"
 
 class TaskSearchSchema(BaseModel):
     """ Define como deve ser a estrutura que representa a busca. Que será feita apenas com base no id da task.
@@ -42,13 +36,19 @@ class TaskViewSchema(BaseModel):
     """
     id: int = 1
     description: str = "Cortar cabelo",
-    done: Optional[int] = 0
+    done: int = 0 | 1
+
+class TaskUpdateSchema(BaseModel):
+    """Define como deve ser a estrutura que representa a atualização da task. Que será feita apenas com base no id e status da task.
+    """
+    id: int 
+    done: int
 
 class TaskDelSchema(BaseModel):
     """ Define como deve ser a estrutura do dado retornado após uma requisição de remoção.
     """
-    mesage: str
-    description: str
+    id: int = 1
+    message: str
 
 def show_task(task: Task):
     """ Retorna uma representação do produto seguindo o schema definido em TaskViewSchema.

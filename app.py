@@ -16,7 +16,7 @@ CORS(app)
 
 # definindo tags
 home_tag = Tag(name="Documentação", description="Seleção de documentação: Swagger, Redoc ou RapiDoc")
-task_tag = Tag(name="Task", description="Visualização, adição e deleção de tarefas à base")
+task_tag = Tag(name="Task", description="Visualização, adição, atualização e deleção de tarefas na base")
 
 @app.get('/', tags=[home_tag])
 def home():
@@ -26,22 +26,18 @@ def home():
 
 @app.get('/tasks', tags=[task_tag], responses={"200": ListTasksSchema, "404": ErrorSchema})
 def get_tasks():
-    """Faz a busca por todas as Tasks cadastradas
+    """Faz a busca por todas as Tarefas cadastradas
 
-    Retorna uma representação da listagem de tasks.
+    Retorna uma representação da listagem de tarefas.
     """
-    logger.debug(f"Coletando tasks ")
-    # criando conexão com a base
+    logger.debug(f"Coletando tarefas ")
     session = Session()
-    # fazendo a busca
     tasks = session.query(Task).all()
     
     if not tasks:
-        # se não há produtos cadastrados
         return {"tasks": []}, 200
     else:
-        logger.debug(f"%d tasks encontradas" % len(tasks))
-        # retorna a representação de task
+        logger.debug(f"%d tarefas encontradas" % len(tasks))
         print(tasks)
         return show_tasks(tasks), 200
 
@@ -50,71 +46,76 @@ def add_task(form: TaskSchema):
     """Adiciona uma nova Task à base de dados.
     Retorna uma representação da task.
     """
+    # Validando que a string não está vazia
+    if not form.description.strip():
+        error_msg = "A tarefa não pode estar vazia."
+        logger.warning(f"Erro ao adicionar tarefa: {error_msg}")
+        return {"message": error_msg}, 400
+
     task = Task(
         description=form.description
     )
-    logger.debug(f"Adicionando task: '{task.description}'")
+    logger.debug(f"Adicionando tarefa: '{task.description}'")
     try:
-        # criando conexão com a base
         session = Session()
-        # adicionando task
         session.add(task)
-        # efetivando o camando de adição de novo item na tabela
         session.commit()
-        logger.debug(f"Adicionado task: '{task.description}'")
+        logger.debug(f"Adicionado tarefa: '{task.description}'")
         return show_task(task), 200
     except Exception as e:
-        # caso um erro fora do previsto
         error_msg = "Não foi possível salvar novo item :/"
-        logger.warning(f"Erro ao adicionar task '{task.description}', {error_msg}")
-        return {"mesage": error_msg}, 400
+        logger.warning(f"Erro ao adicionar tarefa '{task.description}', {error_msg}")
+        return {"message": error_msg}, 400
 
-@app.route('/task/<int:task_id>', methods=['DELETE'])
-def del_task(task_id: int):
-    """Deleta uma Task a partir do id da task informada
+@app.patch('/task', tags=[task_tag], description="Atualiza o status de uma Tarefa a partir a partir do id e status.", responses={"200": TaskViewSchema, "404": ErrorSchema})
+def update_task(form: TaskUpdateSchema):
+    """Atualiza uma Tarefa a partir do id da tarefa informada e status.
+    Retorna uma representação atualizada da tarefa.
+    """
+    task_id = form.id
+    print("-------task_id = ${task_id}--------")
+    logger.debug(f"Atualizando dados sobre tarefa #{task_id}")
+    session = Session()
+    task_db = session.query(Task).filter(Task.id == task_id).first()
+
+    if task_db:
+        try:
+            done_value = form.done
+
+            # Valida que o valor done_value seja 0 ou 1
+            if done_value not in (0, 1):
+                error_msg = "O valor de 'done' deve ser 0 ou 1."
+                logger.warning(f"Erro ao atualizar tarefa #{task_db.id}, {error_msg}")
+                return {"message": error_msg}, 400
+            task_db.done = done_value
+            session.commit()
+            logger.debug(f"Atualizada tarefa #{task_db.id}")
+            print(task_db)
+            return show_task(task_db), 200
+        except Exception as e:
+            error_msg = "Não foi possível atualizar a tarefa :/"
+            logger.warning(f"Erro ao atualizar tarefa #{task_db.id}, {error_msg}")
+            return {"message": error_msg}, 400
+    else:
+        error_msg = "Tarefa não encontrada na base :/"
+        logger.warning(f"Erro ao atualizar tarefa #{task_db.id}, {error_msg}")
+        return {"message": error_msg}, 404
+    
+@app.delete('/task', tags=[task_tag], description="Remove uma Tarefa a partir a partir do id.", responses={"200": TaskDelSchema, "404": ErrorSchema})
+def del_task(query: TaskSearchSchema):
+    """Deleta uma Tarefa a partir do id da tarefa informada
     Retorna uma mensagem de confirmação da remoção.
     """
-    print(task_id)
+    task_id = query.id
     logger.debug(f"Deletando dados sobre task #{task_id}")
-    # criando conexão com a base
     session = Session()
-    # fazendo a remoção
     count = session.query(Task).filter(Task.id == task_id).delete()
     session.commit()
 
     if count:
-        # retorna a representação da mensagem de confirmação
-        logger.debug(f"Deletado task #{task_id}")
-        return {"mesage": "Task removida", "id": task_id}
+        logger.debug(f"Deletado tarefa #{task_id}")
+        return {"message": "Tarefa removida", "id": task_id}
     else:
-        # se a task não foi encontrada
-        error_msg = "Task não encontrada na base :/"
-        logger.warning(f"Erro ao deletar task #'{task_id}', {error_msg}")
-        return {"mesage": error_msg}, 404
-
-@app.route('/task/<int:task_id>',  methods=['PUT'])
-def update_task(task_id: int):
-    """Atualiza uma Task a partir do id da task informada.
-    Retorna uma representação atualizada da task.
-    """
-    logger.debug(f"Atualizando dados sobre task #{task_id}")
-    session = Session()
-    task = session.query(Task).filter(Task.id == task_id).first()
-
-    if task:
-        try:
-            # Extract task status from JSON payload
-            status = request.json.get('done')
-            # Update task status
-            task.done = status
-            session.commit()
-            logger.debug(f"Atualizada task #{task.id}")
-            return show_task(task), 200
-        except Exception as e:
-            error_msg = "Não foi possível atualizar a task :/"
-            logger.warning(f"Erro ao atualizar task #{task.id}, {error_msg}")
-            return {"message": error_msg}, 400
-    else:
-        error_msg = "Task não encontrada na base :/"
-        logger.warning(f"Erro ao atualizar task #{task.id}, {error_msg}")
+        error_msg = "Tarefa não encontrada na base :/"
+        logger.warning(f"Erro ao deletar tarefa #'{task_id}', {error_msg}")
         return {"message": error_msg}, 404
