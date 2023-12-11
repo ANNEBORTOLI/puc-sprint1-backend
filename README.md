@@ -101,9 +101,15 @@ Below are the instructions for the installation, configuration, and use of the a
 
 ## :camera_flash:Usage Examples on Swagger
 
-- Task List
+- Tasks List
 <div align="center">
-  <img src="public/index.png">
+  <img src="/public/back-swagger-routes.png">
+</div>
+<br>
+
+- Tasks List (JSON)
+<div align="center">
+  <img src="/public/tasks.png">
 </div>
 <br>
 
