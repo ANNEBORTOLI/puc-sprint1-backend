@@ -1,8 +1,7 @@
 from flask_openapi3 import OpenAPI, Info, Tag
-from flask import redirect, request, jsonify
+from flask import redirect
 
-from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy import desc, asc
 from model import Session, Task
 from logger import logger
 from schemas import *
@@ -32,7 +31,7 @@ def get_tasks():
     """
     logger.debug(f"Coletando tarefas ")
     session = Session()
-    tasks = session.query(Task).all()
+    tasks = session.query(Task).order_by(Task.done.asc(), Task.insertion_date.desc()).all()
     
     if not tasks:
         return {"tasks": []}, 200
@@ -73,7 +72,6 @@ def update_task(form: TaskUpdateSchema):
     Retorna uma representação atualizada da tarefa.
     """
     task_id = form.id
-    print("-------task_id = ${task_id}--------")
     logger.debug(f"Atualizando dados sobre tarefa #{task_id}")
     session = Session()
     task_db = session.query(Task).filter(Task.id == task_id).first()

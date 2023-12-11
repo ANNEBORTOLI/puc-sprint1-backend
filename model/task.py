@@ -12,7 +12,7 @@ class Task(Base):
     id = Column("pk_task", Integer, primary_key=True)
     description = Column(String(140))
     done = Column(Integer, default=0)
-    insertion_date = Column(DateTime, default=datetime.now())
+    insertion_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, description:str, done:int = 0,
                  insertion_date:Union[DateTime, None] = None):
